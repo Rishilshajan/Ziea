@@ -20,7 +20,7 @@ export default function AuthSlider() {
   }, []);
 
   return (
-    <section className="hidden md:block flex-1 min-h-screen relative overflow-hidden bg-surface-container-high">
+    <section className="hidden md:block w-1/2 h-full relative overflow-hidden bg-surface-container-high shrink-0">
       <div className="absolute inset-0">
         {IMAGES.map((src, idx) => (
           <div

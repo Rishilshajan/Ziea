@@ -9,7 +9,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   const validated = LoginSchema.safeParse(data);
 
   if (!validated.success) {
-    return { error: "Invalid credentials" };
+    return { error: "Invalid credentials", inputs: data };
   }
 
   const supabase = await createClient();
@@ -19,11 +19,18 @@ export async function loginAction(prevState: any, formData: FormData) {
   });
 
   if (error || !user) {
-    return { error: error?.message || "Invalid email or password" };
+    return { error: error?.message || "Invalid email or password", inputs: data };
   }
 
-  // Check role and redirect accordingly
-  const role = user.user_metadata?.role || "Customer";
+  // Fetch the user's role from the public.users table
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const role = profile?.role || "Customer";
+
   if (role === "Admin") {
     redirect("/admin");
   }
@@ -36,7 +43,7 @@ export async function signupAction(prevState: any, formData: FormData) {
   const validated = SignupSchema.safeParse(data);
 
   if (!validated.success) {
-    return { error: validated.error.issues[0].message };
+    return { error: validated.error.issues[0].message, inputs: data };
   }
 
   const supabase = await createClient();
@@ -55,18 +62,32 @@ export async function signupAction(prevState: any, formData: FormData) {
   });
 
   if (error || !user) {
-    return { error: error?.message || "Signup failed" };
+    return { error: error?.message || "Signup failed", inputs: data };
   }
 
-  // Auto sign-in immediately to establish the session and set cookies
-  await supabase.auth.signInWithPassword({
+  // Insert user into public.users table using Service Role to bypass RLS
+  const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error: insertError } = await supabaseAdmin.from("users").insert({
+    id: user.id,
+    first_name: validated.data.firstName,
+    last_name: validated.data.lastName,
     email: validated.data.email,
-    password: validated.data.password,
+    phone: validated.data.phone,
+    password: validated.data.password, // Schema requires it, though ideally handled by Auth
+    role: "Customer",
   });
 
-  // After signup, we stay on the same flow or go to home depends on email confirmation settings
-  // For demo purposes, we redirected to home
-  redirect("/");
+  if (insertError) {
+    console.error("Error inserting into public.users:", insertError);
+    // Even if it fails, the user is signed up in auth.users, but we log the error.
+  }
+
+  return { success: "Verification email sent. Please check your inbox to activate your account.", inputs: data };
 }
 
 export async function logoutAction() {

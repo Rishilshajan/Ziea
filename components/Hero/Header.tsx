@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV_LINKS = [
   { label: "Collections", href: "#" },
@@ -13,15 +14,63 @@ const NAV_LINKS = [
   { label: "Our Story", href: "#" },
 ];
 
+const AVATAR_COLORS = [
+  "bg-[#798C7C] text-white",       // sage-grove
+  "bg-[#2C3C30] text-white",       // deep-forest
+  "bg-[#D4A373] text-white",       // warm terracotta
+  "bg-[#A3B18A] text-deep-forest", // soft olive
+  "bg-[#DDA15E] text-white",       // golden honey
+  "bg-[#6D6875] text-white",       // muted plum
+];
+
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<{ first: string; last: string } | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setIsAuthenticated(true);
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role, first_name, last_name")
+          .eq("id", user.id)
+          .single();
+          
+        if (profile) {
+          setUserRole(profile.role);
+        }
+
+        // Try to get name from profile, then user_metadata, then email
+        const metaFirst = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0];
+        const metaLast = user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ");
+        
+        let first = profile?.first_name || metaFirst || "";
+        let last = profile?.last_name || metaLast || "";
+
+        // If no name found at all, use the first letter of their email
+        if (!first && !last && user.email) {
+          first = user.email.split("@")[0];
+        }
+
+        setUserName({ first, last });
+      }
+    };
+    fetchUser();
+  }, [supabase]);
 
   const handleProfileClick = () => {
-    // Simple check for demo purposes. In a full app, this would use a proper auth hook.
-    const hasSession = document.cookie.includes("session");
-    if (hasSession) {
-      router.push("/admin"); // Or profile page if implemented
+    if (isAuthenticated) {
+      if (userRole === "Admin") {
+        router.push("/admin");
+      } else {
+        router.push("/profile");
+      }
     } else {
       router.push("/login");
     }
@@ -44,6 +93,42 @@ export function Header() {
   const desktopHeader = isScrolled
     ? "md:glass-header md:shadow-ambient md:border-t-0 md:py-6"
     : "md:bg-transparent md:border-t-[10px] md:border-surface md:pt-6 md:pb-10";
+
+  // Helper to get consistent color based on name
+  const getAvatarColor = () => {
+    if (!userName) return AVATAR_COLORS[0];
+    const charCodeSum = (userName.first.charCodeAt(0) || 0) + (userName.last.charCodeAt(0) || 0);
+    return AVATAR_COLORS[charCodeSum % AVATAR_COLORS.length];
+  };
+
+  const renderProfileIcon = (mobile: boolean = false) => {
+    if (isAuthenticated && userName && (userName.first || userName.last)) {
+      const initials = `${userName.first.charAt(0)}${userName.last.charAt(0)}`.toUpperCase();
+      return (
+        <button
+          onClick={handleProfileClick}
+          className={cn(
+            "flex items-center justify-center rounded-full text-[14px] font-semibold tracking-wider transition-transform hover:scale-95",
+            mobile ? "h-7 w-7" : "h-8 w-8",
+            getAvatarColor()
+          )}
+        >
+          {initials}
+        </button>
+      );
+    }
+    return (
+      <button
+        onClick={handleProfileClick}
+        className={cn(
+          "material-symbols-outlined opacity-80 hover:opacity-100 transition-transform cursor-pointer",
+          mobile ? "text-[21px] active:scale-90" : "text-[22px] hover:scale-90"
+        )}
+      >
+        person
+      </button>
+    );
+  };
 
   return (
     <header
@@ -97,12 +182,7 @@ export function Header() {
                 {icon}
               </button>
             ))}
-            <button
-              onClick={handleProfileClick}
-              className="material-symbols-outlined text-[22px] hover:scale-90 transition-transform duration-300 opacity-80 hover:opacity-100 cursor-pointer"
-            >
-              person
-            </button>
+            {renderProfileIcon()}
           </div>
         </div>
 
@@ -129,12 +209,7 @@ export function Header() {
                 {icon}
               </button>
             ))}
-            <button
-              onClick={handleProfileClick}
-              className="material-symbols-outlined text-[21px] opacity-80 active:scale-90 transition-transform"
-            >
-              person
-            </button>
+            {renderProfileIcon(true)}
           </div>
         </div>
       </div>

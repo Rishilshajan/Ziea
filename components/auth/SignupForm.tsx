@@ -1,27 +1,33 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
 import { signupAction } from "@/actions/auth";
+import { useToast } from "@/components/ui/toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function SignupForm() {
   const [state, formAction, isPending] = useActionState(signupAction, null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (state?.error) {
+      toast(state.error, "error");
+    } else if (state?.success) {
+      toast(state.success, "success");
+    }
+  }, [state, toast]);
 
   return (
     <form action={formAction} className="w-full space-y-3">
-      {state?.error && (
-        <div className="text-red-500 text-xs text-center bg-red-50 py-2 rounded">
-          {state.error}
-        </div>
-      )}
-
       {/* Google Button Top */}
-      <div className="pt-2 pb-4 space-y-4">
-        <button
+      <div className="pt-2 pb-2 space-y-3">
+        <Button
           type="button"
-          className="w-full flex items-center justify-center gap-3 bg-transparent border border-sage-grove/30 text-deep-forest py-4 rounded-full font-sans text-sm font-semibold tracking-widest uppercase hover:bg-sage-grove/10 transition-all duration-300"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-sage-grove/30 text-deep-forest hover:bg-sage-grove/10 shadow-sm font-semibold tracking-widest text-xs uppercase"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -30,7 +36,7 @@ export default function SignupForm() {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           Continue with Google
-        </button>
+        </Button>
 
         <div className="flex items-center gap-4 py-2">
           <div className="h-px bg-sage-grove/20 flex-1"></div>
@@ -39,82 +45,83 @@ export default function SignupForm() {
         </div>
       </div>
       {/* First Name */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="firstName">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="firstName">
           First Name
         </label>
-        <input
-          className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+        <Input
           id="firstName"
           name="firstName"
           placeholder="Jane"
           type="text"
+          defaultValue={state?.inputs?.firstName as string || ""}
           required
         />
       </div>
 
       {/* Last Name */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="lastName">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="lastName">
           Last Name
         </label>
-        <input
-          className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+        <Input
           id="lastName"
           name="lastName"
           placeholder="Doe"
           type="text"
+          defaultValue={state?.inputs?.lastName as string || ""}
           required
         />
       </div>
 
       {/* Email Field */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="email">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="email">
           Email Address
         </label>
-        <input
-          className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+        <Input
           id="email"
           name="email"
           placeholder="your@email.com"
           type="email"
+          defaultValue={state?.inputs?.email as string || ""}
           required
         />
       </div>
 
       {/* Phone Field */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="phone">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="phone">
           Phone Number
         </label>
-        <input
-          className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+        <Input
           id="phone"
           name="phone"
           placeholder="+91 00000 00000"
           type="tel"
+          defaultValue={state?.inputs?.phone as string || ""}
           required
         />
       </div>
 
       {/* Password */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="password">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="password">
           Password
         </label>
         <div className="relative">
-          <input
-            className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 pr-8 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+          <Input
+            className="pr-10"
             id="password"
             name="password"
             placeholder="••••••••"
             type={showPassword ? "text" : "password"}
+            defaultValue={state?.inputs?.password as string || ""}
             required
           />
           <button
             type="button"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-sage-grove/60 hover:text-sage-grove transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-grove/60 hover:text-sage-grove transition-colors"
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
@@ -127,22 +134,23 @@ export default function SignupForm() {
       </div>
 
       {/* Confirm Password */}
-      <div className="group relative">
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium mb-1" htmlFor="confirmPassword">
+      <div className="group relative space-y-1.5">
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-body-text font-medium" htmlFor="confirmPassword">
           Retype Password
         </label>
         <div className="relative">
-          <input
-            className="w-full bg-transparent border-b border-sage-grove/20 py-2 px-0 pr-8 focus:ring-0 focus:border-sage-grove transition-colors duration-300 placeholder:text-sage-grove/20 text-on-surface outline-none text-sm"
+          <Input
+            className="pr-10"
             id="confirmPassword"
             name="confirmPassword"
             placeholder="••••••••"
             type={showConfirmPassword ? "text" : "password"}
+            defaultValue={state?.inputs?.confirmPassword as string || ""}
             required
           />
           <button
             type="button"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-sage-grove/60 hover:text-sage-grove transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-grove/60 hover:text-sage-grove transition-colors"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           >
             {showConfirmPassword ? (
@@ -155,13 +163,13 @@ export default function SignupForm() {
       </div>
 
       {/* CTA */}
-      <div className="pt-6">
-        <button
-          className="w-full bg-sage-grove text-white py-4 rounded-full font-sans text-sm font-semibold tracking-widest uppercase hover:bg-deep-forest transition-all duration-500 shadow-lg shadow-sage-grove/10 active:scale-[0.98]"
+      <div className="pt-4">
+        <Button
           type="submit"
+          disabled={isPending}
         >
-          Create Account
-        </button>
+          {isPending ? "Creating Account..." : "Create Account"}
+        </Button>
       </div>
     </form>
   );
