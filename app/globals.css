@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-sage-grove: #7a9268;
+  --color-deep-forest: #2c3829;
+  --color-terracotta: #c4856a;
+  --color-warm-cream: #f5f0e8;
+  --color-linen-mist: #ede6d8;
+  --color-sage-light: #a8bc9a;
+  --color-sage-pale: #d4dfd0;
+  --color-petal-blush: #e8d5c4;
+  --color-warm-mist: #7a7068;
+
+  /* Surface Mappings */
+  --color-surface: var(--color-warm-cream);
+  --color-surface-container: var(--color-linen-mist);
+  --color-surface-container-low: #fff1e7;
+  --color-surface-container-high: #f3e6dc;
+  --color-surface-container-highest: #eee0d6;
+
+  --color-on-surface: #211a15;
+  --color-body-text: var(--color-warm-mist);
+
+  --font-serif: var(--font-cormorant), serif;
+  --font-sans: var(--font-jost), sans-serif;
+
+  --shadow-ambient: 0 32px 64px -15px rgba(33, 26, 21, 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  body {
+    @apply bg-warm-cream text-on-surface font-sans antialiased selection:bg-sage-grove/10 selection:text-sage-grove;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+  }
+
+  /* Override browser autofill background color */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: var(--color-on-surface) !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .glass-header {
+    @apply bg-warm-cream/80 backdrop-blur-[20px];
+  }
+
+  .editorial-reveal {
+    @apply transition-all duration-[1200ms];
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.section-padding {
+  @apply py-12 md:py-20 px-6 md:px-12;
+}
+
+.label-md {
+  @apply font-sans text-xs tracking-[0.2em] uppercase font-medium;
+}
+
+.display-lg {
+  @apply font-serif text-5xl md:text-8xl italic leading-[1.1];
+}
+
+.display-md {
+  @apply font-serif text-4xl md:text-6xl italic leading-[1.2];
 }
